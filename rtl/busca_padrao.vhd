@@ -125,8 +125,11 @@ begin
 	------------------------ Maquina de estados: logica combinacional --------------------------------
 	fsm_comb: process(Bus2IP_Clk, Bus2IP_Reset, current_state, slv_reg, pixel, addr_x, addr_y)
 	begin
+		-- Analisa e seta o proximo estado da maquina de controle, conforme transicoes descritas
+		-- na especificacao do trabalho
 		case current_state is
 
+			-- Estado para inicio do processamento
 			when S_REP =>
 				if (slv_reg(9)(0) = '1') then
 					next_state <= S_PI1;
@@ -134,6 +137,7 @@ begin
 					next_state <= S_REP;
 				end if;
 
+			-- Analisa se pixel combina com 1o posicao do padrao fornecido
 			when S_PI1 =>
 				if  (slv_reg(0) = pixel) then
 					next_state <= S_PI2;
@@ -141,6 +145,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 2o posicao do padrao fornecido
 			when S_PI2 => 
 				if  (slv_reg(1) = pixel) then
 					next_state <= S_PI3;
@@ -148,6 +153,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 3o posicao do padrao fornecido
 			when S_PI3 =>
 				if  (slv_reg(2) = pixel) then
 					next_state <= S_PI4;
@@ -155,6 +161,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 4o posicao do padrao fornecido
 			when S_PI4 => 
 				if  (slv_reg(3) = pixel) then
 					next_state <= S_PI5;
@@ -162,6 +169,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 5o posicao do padrao fornecido
 			when S_PI5 =>
 				if  (slv_reg(4) = pixel) then
 					next_state <= S_PI6;
@@ -169,6 +177,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 6o posicao do padrao fornecido
 			when S_PI6 =>
 				if  (slv_reg(5) = pixel) then
 					next_state <= S_PI7;
@@ -176,6 +185,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 7o posicao do padrao fornecido
 			when S_PI7 =>
 				if  (slv_reg(6) = pixel) then
 					next_state <= S_PI8;
@@ -183,6 +193,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 8o posicao do padrao fornecido
 			when S_PI8 =>
 				if  (slv_reg(7) = pixel) then
 					next_state <= S_PI9;
@@ -190,6 +201,7 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Analisa se pixel combina com 9o posicao do padrao fornecido
 			when S_PI9 =>
 				if  (slv_reg(8) = pixel) then
 					next_state <= S_MATCH;
@@ -197,9 +209,12 @@ begin
 					next_state <= S_NEXT_PIXEL;
 				end if;
 
+			-- Indica que todo o padrao foi encontrado
 			when S_MATCH =>
 				next_state <= S_NEXT_PIXEL;
 
+			-- Se chegou ao fim da imagem, termina processamento
+			-- Senao retorna para primeiro estado da busca
 			when S_NEXT_PIXEL =>
 				if (addr_x = "1111" and addr_y = "1110") then
 					next_state <= S_END;
@@ -207,6 +222,7 @@ begin
 					next_state <= S_PI1;
 				end if;
 
+			-- Estado final. Retorna para inicio.
 			when S_END =>
 				next_state <= S_REP;
 
@@ -215,41 +231,47 @@ begin
 		end case;
 	end process fsm_comb;
 
+	------------------------ Controle da leitura dos resultados --------------------------------
 	data_reading: process(Bus2IP_RdCE, Bus2IP_Reset)
 	begin
+		-- Reseta barramento de dados de saida
 		if (Bus2IP_Reset = '1') then
 			IP2Bus_Data_s <= (others => '0');
+
+		-- Analisa se usuario pediu um dado
+		-- e retorna ele atraves do barramento de dados de saida
+		else
+			case Bus2IP_RdCE is
+				-- Envia numero de matches
+				when "000000000010000" =>
+					IP2Bus_Data_s <= slv_reg(10);
+				
+				-- Primeiro match - coordenada x
+				when "000000000001000" =>
+					IP2Bus_Data_s <= slv_reg(11);
+
+				-- Primeiro match - coordenada y
+				when "000000000000100" =>
+					IP2Bus_Data_s <= slv_reg(12);
+
+				-- Segundo match - coordenada x
+				when "000000000000010" =>
+					IP2Bus_Data_s <= slv_reg(13);
+
+				-- Segundo match - coordenada y
+				when "000000000000001" =>
+					IP2Bus_Data_s <= slv_reg(14);
+
+				when others =>
+					null;
+			end case;
 		end if;
-
-		case Bus2IP_RdCE is
-			-- Envia numero de matches
-			when "000000000010000" =>
-				IP2Bus_Data_s <= slv_reg(10);
-			
-			-- Primeiro match - coordenada x
-			when "000000000001000" =>
-				IP2Bus_Data_s <= slv_reg(11);
-
-			-- Primeiro match - coordenada y
-			when "000000000000100" =>
-				IP2Bus_Data_s <= slv_reg(12);
-
-			-- Segundo match - coordenada x
-			when "000000000000010" =>
-				IP2Bus_Data_s <= slv_reg(13);
-
-			-- Segundo match - coordenada y
-			when "000000000000001" =>
-				IP2Bus_Data_s <= slv_reg(14);
-
-			when others =>
-				null;
-		end case;
 	end process data_reading;
 
 	------------------------ Controle e registro de dados --------------------------------
 	data_control: process(Bus2IP_Clk, Bus2IP_Reset)
 	begin
+		-- Reseta sinais e barramentos
 		if (Bus2IP_Reset = '1') then
 			slv_reg <= (others => (others => '0'));
 			matches_counter <= (others => '0');
@@ -257,6 +279,7 @@ begin
 			next_saved_addr <= '0';
 
 		elsif (Bus2IP_Clk'event and Bus2IP_Clk = '1') then
+			-- Realiza procedimentos conforme estado da maquina
 			case current_state is
 				when S_REP =>
 					-- Recebe o padrao a ser usado na busca e 
@@ -297,21 +320,26 @@ begin
 
 					end case;
 
+				-- Reseta reg init
 				when S_PI1 =>
 					slv_reg(9)(0) <= '0';
 
+				-- Uma combinacao completa foi encontrada, entao incrementa contador de matches_counter
+				-- e salva coordenada
 				when S_MATCH => 
 					matches_counter <= matches_counter + 1;
-
+					-- posicoes 11 e 12
 					if (next_saved_addr = '0') then
 						slv_reg(11) <= "0000" & addr_x;
 						slv_reg(12) <= "0000" & addr_y;
 						next_saved_addr <= '1';
+					-- posicoes 13 e 14
 					else
 						slv_reg(13) <= "0000" & addr_x;
 						slv_reg(14) <= "0000" & addr_y;
 					end if;
 
+				-- Estado final, gera interrupcao e salva contador de matches
 				when S_END =>
 					user_int_s <= '1';
 					slv_reg(10) <= matches_counter;
@@ -322,53 +350,67 @@ begin
 		end if;
 	end process data_control;
 
+	------------------------ Controle de enderecamento --------------------------------
 	addr_control: process(current_state, Bus2IP_Reset)
 	begin
+		-- Reseta sinais de enderecamento
 		if (Bus2IP_Reset = '1') then
 			address <= (others => '0');
 			addr_x <= (others => '0');
 			addr_y <= (others => '0');
+
+		-- Obtem enderecamento conforme maquina de controle (address = (y,x))
+		else
+			case current_state is
+				-- pixel (0,0) do quadro
+				when S_PI1 =>
+					address <= addr_y & addr_x;
+
+				-- pixel (0,1) do quadro
+				when S_PI2 => 
+					address <= addr_y & (addr_x + 1);
+
+				-- pixel (0,2) do quadro
+				when S_PI3 =>
+					address <= addr_y & (addr_x + 2);
+
+				-- pixel (1,0) do quadro
+				when S_PI4 => 
+					address <= (addr_y + 1) & addr_x;
+
+				-- pixel (1,1) do quadro
+				when S_PI5 =>
+					address <= (addr_y + 1) & (addr_x + 1);
+
+				-- pixel (1,2) do quadro
+				when S_PI6 =>
+					address <= (addr_y + 1) & (addr_x + 2);
+
+				-- pixel (2,0) do quadro
+				when S_PI7 =>
+					address <= (addr_y + 2) & addr_x;
+
+				-- pixel (2,1) do quadro
+				when S_PI8 =>
+					address <= (addr_y + 2) & (addr_x + 1);
+
+				-- pixel (2,2) do quadro
+				when S_PI9 =>
+					address <= (addr_y + 2) & (addr_x + 2);
+
+				-- obtem proximo pixel
+				when S_NEXT_PIXEL =>
+					addr_x <= addr_x + 1;
+
+					if (addr_x = "1111") then
+						addr_x <= (others => '0');
+						addr_y <= addr_y + 1;
+					end if;
+
+				when others =>
+					null;
+			end case;
 		end if;
-
-		case current_state is
-			when S_PI1 =>
-				address <= addr_y & addr_x;
-
-			when S_PI2 => 
-				address <= addr_y & (addr_x + 1);
-
-			when S_PI3 =>
-				address <= addr_y & (addr_x + 2);
-
-			when S_PI4 => 
-				address <= (addr_y + 1) & addr_x;
-
-			when S_PI5 =>
-				address <= (addr_y + 1) & (addr_x + 1);
-
-			when S_PI6 =>
-				address <= (addr_y + 1) & (addr_x + 2);
-
-			when S_PI7 =>
-				address <= (addr_y + 2) & addr_x;
-
-			when S_PI8 =>
-				address <= (addr_y + 2) & (addr_x + 1);
-
-			when S_PI9 =>
-				address <= (addr_y + 2) & (addr_x + 2);
-
-			when S_NEXT_PIXEL =>
-				addr_x <= addr_x + 1;
-
-				if (addr_x = "1111") then
-					addr_x <= (others => '0');
-					addr_y <= addr_y + 1;
-				end if;
-
-			when others =>
-				null;
-		end case;
 	end process addr_control;
 
 end busca;
