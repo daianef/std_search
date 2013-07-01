@@ -4,14 +4,7 @@
 --	Data: 01/07/2013
 --	Trabalho Final - Microeletronica - FACIN/PUCRS
 --------------------------------------------------------------------------------------------------------------------------
--- Proposito:
---  - Realiza a busca em uma imagem internamente armazenada no circuito a partir de um padrao fornecido.
---
--- Decisoes de projeto:
---  - Todas as sincronizacoes com o clock sao feitas na borda de subida.
---  - Utiliza reset assincrono. 
---  -
---
+-- Proposito: Realizar a busca em uma imagem internamente armazenada no circuito a partir de um padrao fornecido.
 --------------------------------------------------------------------------------------------------------------------------
 
 -- #######################################################################################################################                 
@@ -19,6 +12,7 @@
 library ieee;
 	use ieee.std_logic_1164.all;
 	use ieee.std_logic_unsigned.all;
+
 -- 
 -- Entidade: interface externa do circuito (pinos de entrada e saida)
 --
@@ -98,8 +92,6 @@ architecture busca of busca_padrao is
 	signal next_saved_addr				: std_logic;
 	-- Coordenadas X e Y
 	signal addr_x, addr_y				: std_logic_vector(3 downto 0);
-	-- Sinais auxiliares para coordenadas
-	signal saved_addr_x, saved_addr_y	: std_logic_vector(3 downto 0);
 
 	----- Sinais de saida -----
 	-- Barramento de dados
@@ -220,39 +212,44 @@ begin
 
 			when others =>
 				null;
-
 		end case;
 	end process fsm_comb;
 
-	------------------------ Controle e registro de dados --------------------------------
-	data_control: process(Bus2IP_Clk, Bus2IP_Reset, Bus2IP_RdCE)
+	data_reading: process(Bus2IP_RdCE, Bus2IP_Reset)
 	begin
+		if (Bus2IP_Reset = '1') then
+			IP2Bus_Data_s <= (others => '0');
+		end if;
+
 		case Bus2IP_RdCE is
 			-- Envia numero de matches
 			when "000000000010000" =>
-				IP2Bus_Data <= slv_reg(10);
+				IP2Bus_Data_s <= slv_reg(10);
 			
 			-- Primeiro match - coordenada x
 			when "000000000001000" =>
-				IP2Bus_Data <= slv_reg(11);
+				IP2Bus_Data_s <= slv_reg(11);
 
 			-- Primeiro match - coordenada y
 			when "000000000000100" =>
-				IP2Bus_Data <= slv_reg(12);
+				IP2Bus_Data_s <= slv_reg(12);
 
 			-- Segundo match - coordenada x
 			when "000000000000010" =>
-				IP2Bus_Data <= slv_reg(13);
+				IP2Bus_Data_s <= slv_reg(13);
 
 			-- Segundo match - coordenada y
 			when "000000000000001" =>
-				IP2Bus_Data <= slv_reg(14);
+				IP2Bus_Data_s <= slv_reg(14);
 
 			when others =>
 				null;
-
 		end case;
+	end process data_reading;
 
+	------------------------ Controle e registro de dados --------------------------------
+	data_control: process(Bus2IP_Clk, Bus2IP_Reset)
+	begin
 		if (Bus2IP_Reset = '1') then
 			slv_reg <= (others => (others => '0'));
 			matches_counter <= (others => '0');
@@ -260,14 +257,11 @@ begin
 			next_saved_addr <= '0';
 
 		elsif (Bus2IP_Clk'event and Bus2IP_Clk = '1') then
-
 			case current_state is
-
 				when S_REP =>
 					-- Recebe o padrao a ser usado na busca e 
 					-- armazena nos registradores de 0 a 9
 					case Bus2IP_WrCE is
-
 						when "100000000000000" =>
 							slv_reg(0) <= Bus2IP_Data;
 
@@ -324,7 +318,6 @@ begin
 
 				when others =>
 					null;
-
 			end case;
 		end if;
 	end process data_control;
@@ -336,48 +329,46 @@ begin
 			addr_x <= (others => '0');
 			addr_y <= (others => '0');
 		end if;
---		elsif (Bus2IP_Clk'event and Bus2IP_Clk = '1') then
-			case current_state is
 
-				when S_PI1 =>
-					address <= addr_y & addr_x;
+		case current_state is
+			when S_PI1 =>
+				address <= addr_y & addr_x;
 
-				when S_PI2 => 
-					address <= addr_y & (addr_x + 1);
+			when S_PI2 => 
+				address <= addr_y & (addr_x + 1);
 
-				when S_PI3 =>
-					address <= addr_y & (addr_x + 2);
+			when S_PI3 =>
+				address <= addr_y & (addr_x + 2);
 
-				when S_PI4 => 
-					address <= (addr_y + 1) & addr_x;
+			when S_PI4 => 
+				address <= (addr_y + 1) & addr_x;
 
-				when S_PI5 =>
-					address <= (addr_y + 1) & (addr_x + 1);
+			when S_PI5 =>
+				address <= (addr_y + 1) & (addr_x + 1);
 
-				when S_PI6 =>
-					address <= (addr_y + 1) & (addr_x + 2);
+			when S_PI6 =>
+				address <= (addr_y + 1) & (addr_x + 2);
 
-				when S_PI7 =>
-					address <= (addr_y + 2) & addr_x;
+			when S_PI7 =>
+				address <= (addr_y + 2) & addr_x;
 
-				when S_PI8 =>
-					address <= (addr_y + 2) & (addr_x + 1);
+			when S_PI8 =>
+				address <= (addr_y + 2) & (addr_x + 1);
 
-				when S_PI9 =>
-					address <= (addr_y + 2) & (addr_x + 2);
+			when S_PI9 =>
+				address <= (addr_y + 2) & (addr_x + 2);
 
-				when S_NEXT_PIXEL =>
-					addr_x <= addr_x + 1;
+			when S_NEXT_PIXEL =>
+				addr_x <= addr_x + 1;
 
-					if (addr_x = "1111") then
-						addr_x <= (others => '0');
-						addr_y <= addr_y + 1;
-					end if;
+				if (addr_x = "1111") then
+					addr_x <= (others => '0');
+					addr_y <= addr_y + 1;
+				end if;
 
-				when others =>
-					null;
-			end case;
-		--end if;
+			when others =>
+				null;
+		end case;
 	end process addr_control;
 
 end busca;
