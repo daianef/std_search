@@ -16,9 +16,19 @@ globalNetConnect vdd -type pgpin -pin vdd -inst *
 globalNetConnect gnd -type pgpin -pin gnd -inst *
 globalNetConnect vdd -type tiehi -inst *
 globalNetConnect gnd -type tielo -inst *
+
 ##Generate power ring with 0.25um spacing (between metal lines), 0.5um width and 1.5um offset from the core. Use M1 for horizontal and M2 for vertical
 addRing -spacing_bottom 0.25 -width_left 0.5 -width_bottom 0.5 -width_top 0.5 -spacing_top 0.25 -layer_bottom M1 -stacked_via_top_layer AP -width_right 0.5 -around core -jog_distance 2.5 -offset_bottom 1.5 -layer_top M1 -threshold 2.5 -offset_left 1.5 -spacing_right 0.25 -spacing_left 0.25 -offset_right 1.5 -offset_top 1.5 -layer_right M2 -nets {gnd vdd } -stacked_via_bottom_layer M1 -layer_left M2
+
 ##Route power rails using M1
 sroute -connect { blockPin padPin padRing corePin floatingStripe } -layerChangeRange { M1 AP } -blockPinTarget { nearestRingStripe nearestTarget } -padPinPortConnect { allPort oneGeom } -checkAlignedSecondaryPin 1 -blockPin useLef -allowJogging 1 -crossoverViaBottomLayer M1 -allowLayerChange 1 -targetViaTopLayer AP -crossoverViaTopLayer AP -targetViaBottomLayer M1 -nets { gnd vdd }
+
 ##Add well taps
-addWellTap -cell HS65_GS_FILLERNPWPFP3 -cellInterval 10 -fixedGap -prefix WELLTAP -area 10.261 2.397 10.9 16.373
+addWellTap -cell HS65_GS_FILLERNPWPFP3 -cellInterval 20 -fixedGap -prefix WELLTAP -inRowOffset 6.0
+
+##Add power stripes
+addStripe -block_ring_top_layer_limit M3 -max_same_layer_jog_length 6 -
+padcore_ring_bottom_layer_limit M1 -set_to_set_distance 25 -stacked_via_top_layer AP -
+padcore_ring_top_layer_limit M3 -spacing 4 -merge_stripes_value 2.5 -layer M2 -
+block_ring_bottom_layer_limit M1 -xleft_offset 10.0 -width 0.5 -nets {gnd vdd} -
+stacked_via_bottom_layer M1

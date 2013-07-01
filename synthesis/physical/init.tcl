@@ -11,7 +11,7 @@
 ##  -Generate a floorplan                                   ##
 ##############################################################
 ##Loading std cell libs / netlist / constraints / setting vdd/gnd
-loadConfig layout/Mult_CSAdder.conf 0
+loadConfig layout/busca_padrao.conf 0
 setUIVar rda_Input ui_gndnet gnd
 setUIVar rda_Input ui_pwrnet vdd
 commitConfig

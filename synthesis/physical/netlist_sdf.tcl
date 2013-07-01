@@ -9,10 +9,11 @@
 ##  -Annotate the delay of the final design                 ##
 ##############################################################
 ##Export design netlist
-saveNetlist Mult_CSAdder.v
-##Annotate design delay
-extractRC -outfile Mult_CSAdder.cap
+saveNetlist busca_padrao.v
+##
+Annotate design delay
+extractRC -outfile busca_padrao.cap
 clearClockDomains
 setClockDomains -all
-timeDesign -postRoute -pathReports -drvReports -slackReports -numPaths 50 -prefix Mult_CSAdder_postRoute -outDir timingReports
-write_sdf -ideal_clock_network Mult_CSAdder.sdf
+timeDesign -postRoute -pathReports -drvReports -slackReports -numPaths 50 -prefix busca_padrao_postRoute -outDir timingReports
+write_sdf -ideal_clock_network busca_padrao.sdf

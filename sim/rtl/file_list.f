@@ -1,3 +1,4 @@
--smartorder -work work -V93 -top testa_mult -notimingchecks -gui -access +rw
-../../rtl/multiplica.vhd
-../tb/tb.vhd
+-smartorder -work work -V93 -top user_logic_tb -notimingchecks -gui -access +rw
+../../rtl/busca_padrao.vhd
+../tb/testbench.vhd
+

@@ -7,11 +7,11 @@
 
 ## 1) load synthesis configuration, read description and elaborate design 
 include load.tcl
-read_hdl -vhdl multiplica.vhd
-elaborate Mult_CSAdder
+read_hdl -vhdl busca_padrao.vhd
+elaborate busca_padrao
 
 ## 2) read constraints
-read_sdc ../constraint/Mult_CSAdder.sdc
+read_sdc ../constraint/busca_padrao.sdc
 
 ## 3) synthesize to generic
 synthesize -to_generic -eff high
@@ -20,4 +20,4 @@ synthesize -to_generic -eff high
 synthesize -to_mapped -eff high -no_incr
 
 ## 5) build physical synthesis environment
-write_design -encounter -basename layout/Mult_CSAdder
+write_design -encounter -basename layout/busca_padrao

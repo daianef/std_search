@@ -13,8 +13,18 @@
 setPlaceMode -fp false
 placeDesign -prePlaceOpt
 setDrawView place
+
 ##Place pins in left and right margins
-editPin -side Left -pinWidth 0.1 -pinDepth 0.52 -layer 3 -spreadType side -pin {{B[0]} {B[1]} {B[2]} {B[3]} {A[0]} {A[1]} {A[2]} {A[3]}}
-editPin -side Right -pinWidth 0.1 -pinDepth 0.52 -layer 3 -spreadType side -pin {{P[0]} {P[1]} {P[2]} {P[3]} {P[4]} {P[5]} {P[6]} {P[7]}}
+editPin -side Left -pinWidth 0.1 -pinDepth 0.52 -layer 3 -spreadType side -pin {{get_ports {Bus2IP_RdCE}} {get_ports {Bus2IP_WrCE}} {get_ports {Bus2IP_Data}}} 
+editPin -side Right -pinWidth 0.1 -pinDepth 0.52 -layer 3 -spreadType side -pin {{user_int} {IP2Bus_Data[0]} {IP2Bus_Data[1]} {IP2Bus_Data[2]} {IP2Bus_Data[3]} {IP2Bus_Data[4]} {IP2Bus_Data[5]} {IP2Bus_Data[6]} {IP2Bus_Data[7]}} 
+
 ##Initial route of the design
 trialRoute -maxRouteLayer 8
+
+##{{B[0]} {B[1]} {B[2]} {B[3]} {A[0]} {A[1]} {A[2]} {A[3]}}
+##{Bus2IP_RdCE[0]} {Bus2IP_RdCE[0]} {Bus2IP_RdCE[0]} {Bus2IP_RdCE[0]} {Bus2IP_RdCE[0]} {Bus2IP_RdCE[0]}}
+##		Bus2IP_RdCE		: in  std_logic_vector(0 to 14);
+##		Bus2IP_WrCE		: in  std_logic_vector(0 to 14);
+##		Bus2IP_Data		: in  std_logic_vector(7 downto 0);
+##		IP2Bus_Data		: out std_logic_vector(7 downto 0);
+##		user_int		: out std_logic
